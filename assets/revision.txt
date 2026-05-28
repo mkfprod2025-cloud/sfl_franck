@@ -1,0 +1,14 @@
+revision complete suite a crash api tu n as donc pas notre derniere evolution sur laquelle tu travaillais depuis le jeu ne demarre plus j ai l ecran d acceuil mais quand j appuis sur start l ecran de jeu reste noir . t u as realisé une partie apparement . donc reprenons les point qui manque en vible et je te laisse voir les erreurs  de fonctionnement .
+ "C:\Users\amber\OneDrive\Bureau\SFL_franck\assets\mise a jour.png"  ceci est le fichier qui me permet de te guider sur la nouvelle mise en page de l appli 
+"C:\Users\amber\OneDrive\Bureau\SFL_franck\assets\franky.png" decale et agrandit dans les ronds bleus je te laisse les realigner correctement pour la mise en page 
+"C:\Users\amber\OneDrive\Bureau\SFL_franck\assets\logo.webp" est remplacé par "C:\Users\amber\OneDrive\Bureau\SFL_franck\assets\logoF.png" . le nouveau logoF doit prendre la place du carre rouge tu va enlever les ecrit " sunflowerland francky's escape free Franky en blanc et jaune . et t accaparer la place pour le logoF structure  le au dessus de  francky.png;
+attention ne restructure pas la fenetre de jeu qui doit etre exactement de la taille des tiles du jeu 
+ajoute en bas a droite sur le background un bouton story et un bouton rules . story ammene a un pop up : "C:\Users\amber\OneDrive\Bureau\SFL_franck\assets\lorefrancky.png" 
+rules ammene a un guide que j ajouterais plus tard avec les regles et les precision de score et contenu . cette partie n est pas encore realisé . en haut il y a un compteur de vie je souhaiterais qu il soit remplacé par des cœur de coueur changeante jaune pour les vies restantes rouges pour les perdus.
+sur la structure du jeu fais attention a ce que le pad soit fonctionnel pour le mobile .
+
+tu va devoir changer les tiles d herbe verte : "C:\Users\amber\OneDrive\Bureau\SFL_franck\assets\grid_tiles.png" doit etre remplacé par trois differente version plus fines de designe de tiles . 
+"C:\Users\amber\OneDrive\Bureau\SFL_franck\assets\3.png" pour la principale couleur de tiles 
+"C:\Users\amber\OneDrive\Bureau\SFL_franck\assets\4.png"
+"C:\Users\amber\OneDrive\Bureau\SFL_franck\assets\2.png" 
+qui seront moins presentent que la premiere et parsemé aléatoirement a la generation du niveau 

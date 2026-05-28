@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sunflowerland Francky's Escape</title>
+    <style>
+        @font-face {
+            font-family: 'Retro';
+            src: url('https://fonts.cdnfonts.com/css/common-pixel');
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #111;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #bg-full {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: url('assets/farcaster_banner.png') no-repeat center center;
+            background-size: cover;
+            opacity: 0.9;
+            z-index: -1;
+        }
+
+        #game-ui {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+            font-size: 28px;
+            background: #000;
+            border: 4px solid #555;
+            box-sizing: border-box;
+            z-index: 5;
+            color: #FFFF00;
+            font-weight: bold;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 4 / 3;
+            border: none;
+            background: #000;
+            box-shadow: 0 0 50px rgba(0,0,0,1);
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+
+        #music-board {
+            position: absolute;
+            left: 20px;
+            bottom: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 3px solid #555;
+            padding: 10px;
+            color: #fff;
+            z-index: 20;
+            width: 240px;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        #music-board h3 {
+            margin: 0;
+            font-size: 14px;
+            color: #00FFFF;
+            text-transform: uppercase;
+        }
+
+        #music-board .song-name {
+            font-size: 12px;
+            color: #FFFF00;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #pause-btn {
+            background: #f0f;
+            border: 2px solid #808;
+            color: white;
+            padding: 2px 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        input[type=range] {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        #controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            z-index: 5;
+        }
+
+        .dpad {
+            display: grid;
+            grid-template-columns: repeat(3, 50px);
+            grid-template-rows: repeat(2, 50px);
+            gap: 5px;
+        }
+
+        .btn {
+            background-color: #444;
+            border: 2px solid #888;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            user-select: none;
+            touch-action: none;
+        }
+        .btn:active, .btn.active { background: #666; }
+
+        .btn-up { grid-column: 2; grid-row: 1; }
+        .btn-left { grid-column: 1; grid-row: 2; }
+        .btn-down { grid-column: 2; grid-row: 2; }
+        .btn-right { grid-column: 3; grid-row: 2; }
+
+        .btn-fire {
+            width: 80px;
+            height: 80px;
+            background: #f00;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 18px;
+            border: 4px solid #800;
+            touch-action: none;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            text-align: center;
+        }
+
+        #overlay h1 { font-size: 42px; margin-bottom: 10px; }
+
+        .cpc-blue { color: #00FFFF; }
+        .cpc-yellow { color: #FFFF00; }
+        .cpc-red { color: #FF0000; }
+
+        .heart {
+            width: 30px;
+            height: 30px;
+            display: inline-block;
+            background: #FFFF00;
+            clip-path: polygon(50% 15%, 80% 0%, 100% 20%, 100% 50%, 50% 95%, 0% 50%, 0% 20%, 20% 0%);
+            margin: 0 2px;
+            transition: background 0.3s;
+        }
+        .heart.lost { background: #FF0000; }
+
+        .start-btn {
+            padding: 15px 40px;
+            font-size: 24px;
+            background: #0f0;
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 5px 0 #080;
+            margin-top: 20px;
+        }
+        .start-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #080;
+        }
+
+        .bottom-right-btns {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 110;
+        }
+        .bottom-right-btns button {
+            background: #444;
+            color: #fff;
+            border: 2px solid #888;
+            padding: 10px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .side-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 110;
+        }
+        .mini-btn {
+            background: #ffa500;
+            color: #000;
+            border: 2px solid #8b4513;
+            padding: 5px 15px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .popup {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            max-width: 800px;
+            max-height: 600px;
+            background: #f4e4bc;
+            color: #5d4037;
+            padding: 20px;
+            box-sizing: border-box;
+            border: 8px solid #8b4513;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            z-index: 200;
+            font-family: 'Georgia', serif;
+            background-image: radial-gradient(circle at center, #fdf5e6 0%, #f4e4bc 100%);
+            display: none;
+            flex-direction: column;
+        }
+        .popup.active { display: flex; }
+        .popup h2 { margin-top: 0; margin-bottom: 10px; color: #8b4513; text-align: center; border-bottom: 2px solid #8b4513; flex-shrink: 0; }
+        .popup-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 210;
+        }
+        .popup-content { flex-grow: 1; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+        .popup-content img { width: 100%; height: 100%; object-fit: contain; border-radius: 5px; border: 2px solid #8b4513; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <div id="bg-full"></div>
+    
+    <div class="bottom-right-btns">
+        <button onclick="togglePopup('story-popup')">STORY</button>
+        <button onclick="alert('Rules will be added soon!')">RULES</button>
+    </div>
+
+    <div id="story-popup" class="popup">
+        <span class="popup-close" onclick="togglePopup('story-popup')">&times;</span>
+        <h2>Francky's Story</h2>
+        <div class="popup-content">
+            <img src="assets/lorefrancky.png" alt="Story Lore">
+        </div>
+    </div>
+
+    <div id="game-ui">
+        <div class="cpc-yellow">SCORE: <span id="score">000000</span></div>
+        <div class="cpc-blue">LEVEL: <span id="level">1</span></div>
+        <div class="cpc-red">
+            LIVES: 
+            <div id="hearts-container" style="display:inline-block; vertical-align: middle;">
+                <div id="heart-1" class="heart"></div>
+                <div id="heart-2" class="heart"></div>
+                <div id="heart-3" class="heart"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="music-board">
+        <h3>NOW PLAYING</h3>
+        <div class="song-name">franky's journey</div>
+        <div class="audio-controls">
+            <span id="mute-btn" style="cursor:pointer; font-size: 20px;">🔊</span>
+            <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="0.5">
+            <button id="pause-btn">PAUSE</button>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="overlay">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                <img src="assets/logoF.png" style="max-width: 80%; max-height: 20vh; object-fit: contain; margin-bottom: 50px; z-index: 2; position: relative;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 40px; width: 100%; max-width: 700px; margin-bottom: 20px;">
+                    <img src="assets/franky.png" style="width: 100px; height: 100px; transform: scale(1.5);">
+                    <button class="start-btn" onclick="initGame()" style="z-index: 3; margin: 0;">START GAME</button>
+                    <img src="assets/franky.png" style="width: 100px; height: 100px; transform: scaleX(-1) scale(1.5);">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="game-music" loop>
+        <source src="assets_music/Francky's journey.m4a" type="audio/mp4">
+    </audio>
+
+    <div id="controls">
+        <div class="dpad">
+            <div class="btn btn-up" onmousedown="setDir(0,-1)" ontouchstart="setDir(0,-1)" onmouseup="setDir(0,0)" ontouchend="setDir(0,0)">▲</div>
+            <div class="btn btn-left" onmousedown="setDir(-1,0)" ontouchstart="setDir(-1,0)" onmouseup="setDir(0,0)" ontouchend="setDir(0,0)">◀</div>
+            <div class="btn btn-down" onmousedown="setDir(0,1)" ontouchstart="setDir(0,1)" onmouseup="setDir(0,0)" ontouchend="setDir(0,0)">▼</div>
+            <div class="btn btn-right" onmousedown="setDir(1,0)" ontouchstart="setDir(1,0)" onmouseup="setDir(0,0)" ontouchend="setDir(0,0)">▶</div>
+        </div>
+        <button class="btn btn-fire" onmousedown="firePip()" ontouchstart="firePip()">FIRE</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const levelEl = document.getElementById('level');
+        const overlay = document.getElementById('overlay');
+
+        function togglePopup(id) {
+            const popup = document.getElementById(id);
+            popup.style.display = (popup.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function handleTouch(e, dx, dy) {
+            e.preventDefault();
+            setDir(dx, dy);
+            // Visual feedback for touch
+            if (dx !== 0 || dy !== 0 || (dx === 0 && dy === 0)) {
+                e.target.classList.toggle('active', dx !== 0 || dy !== 0);
+            }
+        }
+
+        const ASSETS = {
+            projectile: 'assets/projectil_no_bg.png',
+            appleGold: 'assets/pommeor_no_bg.png',
+            appleBronze: 'assets/pommebronze_no_bg.png',
+            cherry: 'assets/collectible1_no_bg.png',
+            cherry2: 'assets/collectible2_no_bg.png',
+            cherry3: 'assets/collectible3_no_bg.png',
+            monster1: 'assets/big_goblin1.png',
+            monster2: 'assets/ennemi3_no_bg.png',
+            gob1: 'assets/gob1.png',
+            gob2: 'assets/gob2.png',
+            gob3: 'assets/gob3.png',
+            hive: 'assets/cave_entrance_no_bg.png',
+            logo: 'assets/logoF.png',
+            dead: 'assets/dead_no_bg.png',
+            cup: 'assets/champion cup_no_bg.png',
+            banner: 'assets/farcaster_banner.png',
+            frankUp: 'assets/F_anime/up.png',
+            frankDown: 'assets/F_anime/down.png',
+            frankLeft: 'assets/F_anime/left.png',
+            tileMain: 'assets/3.png',
+            tile2: 'assets/4.png',
+            tile3: 'assets/2.png',
+            dugGround: 'assets/dug_ground.png'
+        };
+        const images = {};
+
+        const MONSTER_TYPES = {
+            BigNose: { points: 100, speed: 0.025, scale: 1.5, asset: 'monster1' },
+            Eggplant: { points: 75, speed: 0.02, scale: 1.5, asset: 'monster2', wallPass: false },
+            Gob1: { points: 60, speed: 0.035, scale: 1.0, asset: 'gob1' },
+            Gob2: { points: 80, speed: 0.03, scale: 1.0, asset: 'gob2' },
+            Gob3: { points: 120, speed: 0.045, scale: 1.0, asset: 'gob3' },
+            Frog: { points: 50, speed: 0.035, scale: 1.2, asset: 'monster2' } // Bonus
+        };
+
+        const PALETTE = {
+            BLACK: '#000000',
+            BLUE: '#0000FF',
+            CYAN: '#00FFFF',
+            RED: '#FF0000',
+            YELLOW: '#FFFF00',
+            GREEN: '#00FF00',
+            WHITE: '#FFFFFF',
+            DIRT: '#8B4513'
+        };
+
+        const GRID_W = 16;
+        const GRID_H = 12;
+        let TILE_W, TILE_H;
+
+        const CELL = { EMPTY: 0, DIRT: 1, CHERRY: 2, APPLE: 3, SPAWN: 4, CHERRY2: 5, CHERRY3: 6, DIRT2: 7, DIRT3: 8 };
+
+        const keys = {};
+        window.addEventListener('keydown', e => {
+            keys[e.key] = true;
+            if (e.code === 'Space') {
+                e.preventDefault();
+                firePip();
+            }
+            if (e.key.toLowerCase() === 'p') {
+                togglePause();
+            }
+        });
+        window.addEventListener('keyup', e => keys[e.key] = false);
+
+        let state = {
+            running: false,
+            paused: false,
+            score: 0,
+            level: 1,
+            lives: 3,
+            grid: [],
+            player: { 
+                x: 8, y: 10, dx: 0, dy: 0, lastDx: 1, lastDy: 0, dir: 'R', 
+                pip: null, 
+                invincibility: 0 // In frames
+            },
+            monsters: [],
+            apples: [],
+            bonusWord: "BONUS",
+            bonusIndex: 0,
+            frame: 0,
+            transition: false,
+            loopActive: false
+        };
+
+        const music = document.getElementById('game-music');
+        const volumeSlider = document.getElementById('volume-slider');
+        const muteBtn = document.getElementById('mute-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+
+        volumeSlider.addEventListener('input', (e) => {
+            music.volume = e.target.value;
+            if (music.volume > 0) {
+                muteBtn.innerText = '🔊';
+                music.muted = false;
+            } else {
+                muteBtn.innerText = '🔇';
+            }
+        });
+
+        muteBtn.addEventListener('click', () => {
+            music.muted = !music.muted;
+            muteBtn.innerText = music.muted ? '🔇' : '🔊';
+        });
+
+        pauseBtn.addEventListener('click', togglePause);
+
+        function togglePause() {
+            if (!state.running || state.transition) return;
+            state.paused = !state.paused;
+            pauseBtn.innerText = state.paused ? 'RESUME' : 'PAUSE';
+            if (state.paused) {
+                music.pause();
+            } else {
+                music.play().catch(e => {});
+                if (!state.loopActive) { state.loopActive = true; requestAnimationFrame(gameLoop); }
+            }
+        }
+
+        function preload() {
+            let loaded = 0;
+            const keys = Object.keys(ASSETS);
+            keys.forEach(key => {
+                const img = new Image();
+                img.src = ASSETS[key];
+                img.onload = () => {
+                    images[key] = img;
+                    loaded++;
+                    if (loaded === keys.length) console.log("All assets loaded");
+                };
+                img.onerror = () => {
+                    console.warn(`Asset ${key} not found: ${ASSETS[key]}`);
+                    loaded++;
+                };
+            });
+        }
+
+        function initGame() {
+            state.score = 0; state.level = 1; state.lives = 3; state.bonusIndex = 0;
+            state.frame = 0; state.running = true; state.paused = false; state.transition = false;
+            overlay.style.display = 'none';
+            pauseBtn.innerText = 'PAUSE';
+            loadLevel(state.level);
+            music.play().catch(e => console.log("Audio play blocked"));
+            if (!state.loopActive) { state.loopActive = true; requestAnimationFrame(gameLoop); }
+        }
+
+        function spawnMonster(isBonus = false) {
+            let typeKey;
+            if (isBonus) {
+                typeKey = 'Frog';
+            } else {
+                const rand = Math.random();
+                if (rand < 0.2) typeKey = 'BigNose';
+                else if (rand < 0.4) typeKey = 'Eggplant';
+                else if (rand < 0.6) typeKey = 'Gob1';
+                else if (rand < 0.8) typeKey = 'Gob2';
+                else typeKey = 'Gob3';
+            }
+            
+            const m = {
+                x: 7.5, y: 0.5,
+                type: typeKey,
+                dirX: 0, dirY: 1, targetX: 7.5, targetY: 0.5,
+                letter: isBonus ? state.bonusWord[state.bonusIndex] : null
+            };
+            state.monsters.push(m);
+        }
+
+        function generateLevel(lvl) {
+            state.grid = []; state.apples = []; state.monsters = [];
+            for (let y = 0; y < GRID_H; y++) {
+                state.grid[y] = [];
+                for (let x = 0; x < GRID_W; x++) {
+                    const r = Math.random();
+                    if (r < 0.6) state.grid[y][x] = CELL.DIRT;
+                    else if (r < 0.8) state.grid[y][x] = CELL.DIRT2;
+                    else state.grid[y][x] = CELL.DIRT3;
+                }
+            }
+
+            // GUARANTEED ENEMY ACCESS: Vertical and horizontal tunnels from hive
+            for (let y = 0; y < 6; y++) {
+                if (state.grid[y]) {
+                    state.grid[y][7] = CELL.EMPTY;
+                    state.grid[y][8] = CELL.EMPTY;
+                }
+            }
+            if (state.grid[5]) {
+                for (let x = 4; x < 12; x++) state.grid[5][x] = CELL.EMPTY;
+            }
+
+            for (let i = 0; i < 8; i++) {
+                let x = Math.floor(Math.random() * GRID_W), y = Math.floor(Math.random() * GRID_H);
+                let len = 4 + Math.floor(Math.random() * 4), horiz = Math.random() > 0.5;
+                for (let j = 0; j < len; j++) {
+                    if (x >= 0 && x < GRID_W && y >= 0 && y < GRID_H) {
+                        if (!(y === 0 && (x === 7 || x === 8))) {
+                            if (state.grid[y]) state.grid[y][x] = CELL.EMPTY;
+                        }
+                    }
+                    if (horiz) x++; else y++;
+                }
+            }
+            
+            for (let i = 0; i < 10 + lvl; i++) {
+                let cx = Math.floor(Math.random() * (GRID_W - 1)), cy = Math.floor(Math.random() * (GRID_H - 1));
+                if (cy < 6 && (cx === 7 || cx === 8 || cx+1 === 7 || cx+1 === 8)) continue;
+                
+                const type = [CELL.CHERRY, CELL.CHERRY2, CELL.CHERRY3][Math.floor(Math.random() * 3)];
+                if (state.grid[cy]) state.grid[cy][cx] = type;
+                if (state.grid[cy+1]) state.grid[cy+1][cx] = type;
+                if (state.grid[cy]) state.grid[cy][cx+1] = type;
+            }
+
+            for (let i = 0; i < 4 + lvl; i++) {
+                let ax = Math.floor(Math.random() * GRID_W), ay = Math.floor(Math.random() * (GRID_H - 3));
+                if (ay > 1) {
+                    if (ay === 0 && (ax === 7 || ax === 8)) continue;
+                    if (state.grid[ay]) state.grid[ay][ax] = CELL.EMPTY;
+                    state.apples.push({ x: ax, y: ay, state: 'static', pushTimer: 0, type: Math.random() > 0.3 ? 'gold' : 'bronze' });
+                }
+            }
+            if (state.grid[0]) {
+                state.grid[0][7] = CELL.SPAWN; 
+                state.grid[0][8] = CELL.SPAWN;
+            }
+            state.player.x = 8; state.player.y = 10; state.player.dx = 0; state.player.dy = 0; state.player.pip = null;
+            state.player.invincibility = 60;
+            for(let i=0; i<Math.min(lvl, 4); i++) spawnMonster();
+        }
+
+        function loadLevel(lvl) {
+            generateLevel(lvl);
+            levelEl.innerText = lvl;
+            updateLivesDisplay();
+            scoreEl.innerText = String(state.score).padStart(6, '0');
+        }
+
+        function nextLevel() {
+            if (state.transition) return;
+            state.transition = true; state.running = false;
+            overlay.style.display = 'flex';
+            overlay.innerHTML = `<img src="${ASSETS.cup}" style="width: 150px; margin-bottom: 20px;"><h1 class="cpc-yellow">LEVEL ${state.level} CLEAR!</h1>`;
+            setTimeout(() => {
+                state.level++; loadLevel(state.level);
+                state.running = true; state.transition = false;
+                overlay.style.display = 'none';
+                if (!state.loopActive) { state.loopActive = true; requestAnimationFrame(gameLoop); }
+            }, 2500);
+        }
+
+        function setDir(dx, dy) {
+            if (!state.player) return;
+            state.player.dx = dx; state.player.dy = dy;
+            if (dx !== 0 || dy !== 0) { state.player.lastDx = dx; state.player.lastDy = dy; }
+            if (dx > 0) state.player.dir = 'R'; 
+            else if (dx < 0) state.player.dir = 'L';
+            else if (dy > 0) state.player.dir = 'D';
+            else if (dy < 0) state.player.dir = 'U';
+        }
+
+        function firePip() {
+            if (!state.player || state.player.pip || !state.running || state.transition || state.paused) return;
+            const angleVar = (Math.random() - 0.5) * 0.8;
+            const baseAngle = Math.atan2(state.player.lastDy, state.player.lastDx);
+            const finalAngle = baseAngle + angleVar;
+            state.player.pip = { 
+                x: state.player.x, y: state.player.y, 
+                dx: Math.cos(finalAngle), dy: Math.sin(finalAngle), 
+                bounces: 0,
+                life: 0 // frames
+            };
+        }
+
+        function update() {
+            if (!state.running || state.transition || state.paused) return;
+            state.frame++;
+            if (state.player.invincibility > 0) state.player.invincibility--;
+            if (state.frame % 1000 === 0) spawnMonster(true);
+
+            const speedFactor = 1 + (Math.min(state.level, 3) - 1) * 0.05 + (state.level > 3 ? (state.level - 3) * 0.08 : 0);
+            const frankSpeed = 0.05 * speedFactor;
+
+            let adx = 0, ady = 0;
+            if (keys['ArrowUp'] || keys['w']) ady = -1; else if (keys['ArrowDown'] || keys['s']) ady = 1;
+            else if (keys['ArrowLeft'] || keys['a']) adx = -1; else if (keys['ArrowRight'] || keys['d']) adx = 1;
+            
+            if (adx !== 0 || ady !== 0) {
+                state.player.dx = adx; state.player.dy = ady;
+                state.player.lastDx = adx; state.player.lastDy = ady;
+                if (adx > 0) state.player.dir = 'R'; 
+                else if (adx < 0) state.player.dir = 'L';
+                else if (ady > 0) state.player.dir = 'D';
+                else if (ady < 0) state.player.dir = 'U';
+            } else { state.player.dx = 0; state.player.dy = 0; }
+
+            if (state.player.dx !== 0 || state.player.dy !== 0) {
+                const nx = state.player.x + state.player.dx * frankSpeed;
+                const ny = state.player.y + state.player.dy * frankSpeed;
+                const gx = Math.round(nx), gy = Math.round(ny);
+                if (gx >= 0 && gx < GRID_W && gy >= 0 && gy < GRID_H) {
+                    const apple = state.apples.find(a => a.x === gx && a.y === gy);
+                    if (!apple || apple.state === 'falling') {
+                        state.player.x = nx; state.player.y = ny;
+                        if (state.grid[gy] && [CELL.DIRT, CELL.DIRT2, CELL.DIRT3].includes(state.grid[gy][gx])) state.grid[gy][gx] = CELL.EMPTY;
+                        else if (state.grid[gy] && [CELL.CHERRY, CELL.CHERRY2, CELL.CHERRY3].includes(state.grid[gy][gx])) { 
+                            const pts = state.grid[gy][gx] === CELL.CHERRY ? 10 : (state.grid[gy][gx] === CELL.CHERRY2 ? 20 : 50);
+                            state.grid[gy][gx] = CELL.EMPTY; addScore(pts); 
+                        }
+                    }
+                }
+            }
+
+            if (state.player.pip) {
+                const p = state.player.pip;
+                p.life++;
+                p.x += p.dx * 0.12; p.y += p.dy * 0.12;
+                const gx = Math.round(p.x), gy = Math.round(p.y);
+
+                // FIXED: Check distance and life to prevent instant catch
+                const distToFrank = Math.sqrt(Math.pow(state.player.x - p.x, 2) + Math.pow(state.player.y - p.y, 2));
+                if (p.life > 15 && distToFrank < 0.4) {
+                    state.player.pip = null;
+                } else if (gx < 0 || gx >= GRID_W || gy < 0 || gy >= GRID_H || (state.grid[gy] && [CELL.DIRT, CELL.DIRT2, CELL.DIRT3].includes(state.grid[gy][gx]))) {
+                    p.dx *= -1; p.dy *= -1; p.bounces++;
+                    if (p.bounces > 15) state.player.pip = null;
+                }
+
+                if (state.player.pip) {
+                    for (let i = state.monsters.length - 1; i >= 0; i--) {
+                        const m = state.monsters[i];
+                        if (m && Math.abs(m.x - p.x) < 0.7 && Math.abs(m.y - p.y) < 0.7) {
+                            if (m.letter) { state.bonusIndex++; if (state.bonusIndex >= state.bonusWord.length) { state.lives++; state.bonusIndex = 0; updateLivesDisplay(); } }
+                            const typeData = MONSTER_TYPES[m.type];
+                            const pts = typeData ? typeData.points : 50;
+                            state.monsters.splice(i, 1); state.player.pip = null; addScore(pts); break;
+                        }
+                    }
+                }
+            }
+
+            state.monsters.forEach((m, mIdx) => {
+                if (!m) return;
+                const typeData = MONSTER_TYPES[m.type];
+                const monsterBaseSpeed = typeData ? typeData.speed : 0.025;
+                const monsterSpeed = monsterBaseSpeed * speedFactor;
+
+                if (Math.abs(m.x - m.targetX) < 0.1 && Math.abs(m.y - m.targetY) < 0.1) {
+                    m.x = m.targetX; m.y = m.targetY;
+                    let possible = [];
+                    [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dx,dy]) => {
+                        const nx = m.x + dx, ny = m.y + dy;
+                        if (nx >= 0 && nx < GRID_W && ny >= 0 && ny < GRID_H) {
+                            if (!typeData.wallPass && state.grid[ny] && state.grid[ny][nx] !== CELL.EMPTY) return;
+                            possible.push({dx, dy});
+                        }
+                    });
+                    if (possible.length > 0) {
+                        let choice = possible[Math.floor(Math.random() * possible.length)];
+                        if (Math.random() < 0.7) {
+                            let best = choice; let minDist = 1000;
+                            possible.forEach(p => {
+                                const d = Math.abs(m.x + p.dx - state.player.x) + Math.abs(m.y + p.dy - state.player.y);
+                                if (d < minDist) { minDist = d; best = p; }
+                            });
+                            choice = best;
+                        }
+                        m.dirX = choice.dx; m.dirY = choice.dy;
+                        m.targetX = m.x + m.dirX; m.targetY = m.y + m.dirY;
+                    }
+                }
+                m.x += m.dirX * monsterSpeed; m.y += m.dirY * monsterSpeed;
+                const gx = Math.round(m.x), gy = Math.round(m.y);
+                if (state.grid[gy] && [CELL.DIRT, CELL.DIRT2, CELL.DIRT3].includes(state.grid[gy][gx])) state.grid[gy][gx] = CELL.EMPTY;
+                if (state.player.invincibility <= 0 && Math.abs(m.x - state.player.x) < 0.6 && Math.abs(m.y - state.player.y) < 0.6) die();
+                
+                state.apples.forEach(a => {
+                    if (a.state === 'falling' && Math.abs(a.x - m.x) < 0.5 && Math.abs(a.y - m.y) < 0.5) {
+                        state.monsters.splice(mIdx, 1); addScore(100);
+                    }
+                });
+            });
+
+            state.apples.forEach(a => {
+                const gx = a.x, gy = Math.floor(a.y);
+                if (a.state === 'static') {
+                    if (gy < GRID_H - 1 && state.grid[gy+1] && state.grid[gy+1][gx] === CELL.EMPTY && !state.apples.find(o => o.x === gx && o.y === gy+1)) {
+                        if (Math.abs(state.player.x - gx) > 0.8 || Math.abs(state.player.y - (gy+1)) > 0.8) a.state = 'falling';
+                    }
+                } else if (a.state === 'falling') {
+                    a.y += 0.15;
+                    const ngy = Math.floor(a.y + 0.9);
+                    if (ngy >= GRID_H || (state.grid[ngy] && state.grid[ngy][gx] !== CELL.EMPTY)) { a.y = Math.floor(a.y); a.state = 'static'; }
+                    if (state.player.invincibility <= 0 && Math.abs(state.player.x - a.x) < 0.6 && Math.abs(state.player.y - a.y) < 0.6) die();
+                }
+            });
+
+            if (!state.grid.flat().some(c => [CELL.CHERRY, CELL.CHERRY2, CELL.CHERRY3].includes(c))) nextLevel();
+        }
+
+        function draw() {
+            if (!ctx) return;
+            ctx.fillStyle = PALETTE.BLACK; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const SC_DEFAULT = 1.5; 
+            const ROCK_SC = 2.0; 
+
+            for (let y = 0; y < GRID_H; y++) {
+                if (!state.grid[y]) continue;
+                for (let x = 0; x < GRID_W; x++) {
+                    const cell = state.grid[y][x], px = x * TILE_W, py = y * TILE_H;
+                    if ([CELL.DIRT, CELL.DIRT2, CELL.DIRT3].includes(cell)) {
+                        let img = cell === CELL.DIRT ? images.tileMain : (cell === CELL.DIRT2 ? images.tile2 : images.tile3);
+                        if (img && img.complete) {
+                            ctx.drawImage(img, px, py, TILE_W, TILE_H);
+                        } else {
+                            ctx.fillStyle = PALETTE.DIRT; ctx.fillRect(px, py, TILE_W, TILE_H);
+                        }
+                    } else {
+                        if (images.dugGround && images.dugGround.complete) {
+                            ctx.drawImage(images.dugGround, px, py, TILE_W, TILE_H);
+                        } else {
+                            ctx.fillStyle = PALETTE.BLACK; ctx.fillRect(px, py, TILE_W, TILE_H);
+                        }
+                        
+                        if ([CELL.CHERRY, CELL.CHERRY2, CELL.CHERRY3].includes(cell)) {
+                            let img = cell === CELL.CHERRY ? images.cherry : (cell === CELL.CHERRY2 ? images.cherry2 : images.cherry3);
+                            if (img && img.complete) {
+                                const sw = TILE_W * SC_DEFAULT, sh = TILE_H * SC_DEFAULT;
+                                ctx.drawImage(img, px - (sw-TILE_W)/2, py - (sh-TILE_H)/2, sw, sh);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (images.hive && images.hive.complete) {
+                const px = 6 * TILE_W, py = -0.1 * TILE_H;
+                ctx.drawImage(images.hive, px, py, TILE_W * 4, TILE_H * 1.5);
+            }
+
+            state.apples.forEach(a => {
+                const img = a.type === 'gold' ? images.appleGold : images.appleBronze;
+                if (img && img.complete) {
+                    const sw = TILE_W * ROCK_SC, sh = TILE_H * ROCK_SC;
+                    ctx.drawImage(img, a.x * TILE_W - (sw-TILE_W)/2, a.y * TILE_H - (sh-TILE_H)/2, sw, sh);
+                }
+            });
+
+            if (state.player.pip && images.projectile && images.projectile.complete) {
+                const sw = TILE_W * SC_DEFAULT, sh = TILE_H * SC_DEFAULT;
+                ctx.save(); ctx.translate(state.player.pip.x * TILE_W + TILE_W/2, state.player.pip.y * TILE_H + TILE_H/2);
+                ctx.rotate(state.frame * 0.2); ctx.drawImage(images.projectile, -sw/2, -sh/2, sw, sh); ctx.restore();
+            }
+
+            state.monsters.forEach(m => {
+                if (!m) return;
+                const typeData = MONSTER_TYPES[m.type];
+                const img = images[typeData ? typeData.asset : 'monster1'];
+                if (img && img.complete) {
+                    const scale = typeData ? typeData.scale : SC_DEFAULT;
+                    const sw = TILE_W * scale, sh = TILE_H * scale;
+                    ctx.drawImage(img, m.x * TILE_W - (sw-TILE_W)/2, m.y * TILE_H - (sh-TILE_H)/2, sw, sh);
+                }
+            });
+            
+            if (state.player && state.player.invincibility % 10 < 5) {
+                const ppx = state.player.x * TILE_W, ppy = state.player.y * TILE_H;
+                let img = images.frankDown;
+                if (state.player.dir === 'U') img = images.frankUp;
+                else if (state.player.dir === 'D') img = images.frankDown;
+                else if (state.player.dir === 'L' || state.player.dir === 'R') img = images.frankLeft;
+
+                if (img && img.complete) {
+                    ctx.save();
+                    if (state.player.dir === 'L') { 
+                        ctx.translate(ppx + TILE_W, ppy);
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(img, 0, 0, TILE_W, TILE_H);
+                    } else {
+                        ctx.drawImage(img, ppx, ppy, TILE_W, TILE_H);
+                    }
+                    ctx.restore();
+                }
+            }
+
+            if (state.paused) {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "white";
+                ctx.font = "48px Courier New";
+                ctx.textAlign = "center";
+                ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2);
+            }
+        }
+
+        function addScore(pts) { state.score += pts; scoreEl.innerText = String(state.score).padStart(6, '0'); }
+        
+        function updateHearts() {
+            for (let i = 1; i <= 3; i++) {
+                const heartEl = document.getElementById(`heart-${i}`);
+                if (heartEl) {
+                    if (i <= state.lives) {
+                        heartEl.classList.remove('lost');
+                    } else {
+                        heartEl.classList.add('lost');
+                    }
+                }
+            }
+        }
+
+        function updateLivesDisplay() {
+            updateHearts();
+        }
+        function saveScore() {
+            let board = JSON.parse(localStorage.getItem('sfl_leaderboard') || '[]');
+            board.push({score: state.score, date: new Date().toLocaleDateString()});
+            board.sort((a,b) => b.score - a.score);
+            localStorage.setItem('sfl_leaderboard', JSON.stringify(board.slice(0, 5)));
+        }
+        function showLeaderboard() {
+            let board = JSON.parse(localStorage.getItem('sfl_leaderboard') || '[]');
+            let html = '<h2 class="cpc-yellow">LEADERBOARD</h2><div style="text-align:left; font-size:18px;">';
+            board.forEach((s, i) => html += `<div>${i+1}. ${String(s.score).padStart(6,'0')} - ${s.date}</div>`);
+            html += '</div>';
+            return html;
+        }
+        function die() {
+            state.lives--; updateLivesDisplay();
+            if (state.lives <= 0) { 
+                state.running = false; 
+                saveScore();
+                overlay.style.display = 'flex'; 
+                overlay.innerHTML = `<img src="${ASSETS.dead}" style="width: 200px;"><h1 class="cpc-red">GAME OVER</h1>${showLeaderboard()}<button class="start-btn" onclick="initGame()">RETRY</button>`; 
+            } else { 
+                state.player.x = 8; state.player.y = 10; state.player.pip = null; 
+                state.player.invincibility = 60;
+            }
+        }
+        function gameLoop() { if (!state.running || (state.paused && state.loopActive)) { if (state.paused) { draw(); } state.loopActive = false; return; } update(); draw(); requestAnimationFrame(gameLoop); }
+        function resize() { canvas.width = 800; canvas.height = 600; TILE_W = canvas.width / GRID_W; TILE_H = canvas.height / GRID_H; }
+        window.addEventListener('resize', resize); resize(); preload();
+    </script>
+</body>
+</html>
