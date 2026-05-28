@@ -896,26 +896,54 @@
         function updateLivesDisplay() {
             updateHearts();
         }
-        function saveScore() {
-            let board = JSON.parse(localStorage.getItem('sfl_leaderboard') || '[]');
-            board.push({score: state.score, date: new Date().toLocaleDateString()});
-            board.sort((a,b) => b.score - a.score);
-            localStorage.setItem('sfl_leaderboard', JSON.stringify(board.slice(0, 5)));
-        }
         function showLeaderboard() {
             let board = JSON.parse(localStorage.getItem('sfl_leaderboard') || '[]');
-            let html = '<h2 class="cpc-yellow">LEADERBOARD</h2><div style="text-align:left; font-size:18px;">';
-            board.forEach((s, i) => html += `<div>${i+1}. ${String(s.score).padStart(6,'0')} - ${s.date}</div>`);
-            html += '</div>';
+            let html = '<h2 class="cpc-yellow" style="margin-top:0;">LEADERBOARD</h2><table style="font-size:18px; margin: 0 auto; color:#fff; border-collapse:collapse; text-align:left;">';
+            board.forEach((s, i) => {
+                let name = s.name || 'PLAYER';
+                html += `<tr><td style="padding:0 15px 5px 0;">${i+1}.</td><td style="padding:0 15px 5px 0; color:#0f0; text-transform:uppercase;">${name.substring(0,12)}</td><td style="padding:0 0 5px 0; text-align:right;">${String(s.score).padStart(6,'0')}</td></tr>`;
+            });
+            html += '</table><div style="font-size:12px; margin-top:10px; color:#aaa;">(Google link coming soon)</div>';
             return html;
         }
+
+        function submitScore() {
+            let nameInput = document.getElementById('player-name');
+            let playerName = nameInput ? nameInput.value.trim() : 'Player';
+            if (!playerName) playerName = 'Player';
+            localStorage.setItem('sfl_playerName', playerName);
+            
+            let board = JSON.parse(localStorage.getItem('sfl_leaderboard') || '[]');
+            board.push({name: playerName, score: state.score, date: new Date().toLocaleDateString()});
+            board.sort((a,b) => b.score - a.score);
+            localStorage.setItem('sfl_leaderboard', JSON.stringify(board.slice(0, 5)));
+            
+            document.getElementById('score-form').style.display = 'none';
+            document.getElementById('leaderboard-container').innerHTML = showLeaderboard();
+        }
+
         function die() {
             state.lives--; updateLivesDisplay();
             if (state.lives <= 0) { 
                 state.running = false; 
-                saveScore();
+                let defaultName = localStorage.getItem('sfl_playerName') || 'Player';
                 overlay.style.display = 'flex'; 
-                overlay.innerHTML = `<img src="${ASSETS.dead}" style="width: 200px;"><h1 class="cpc-red">GAME OVER</h1>${showLeaderboard()}<button class="start-btn" onclick="initGame()">RETRY</button>`; 
+                overlay.innerHTML = `
+                    <img src="${ASSETS.dead}" style="width: 150px; margin-bottom: 10px;">
+                    <h1 class="cpc-red" style="margin:0 0 10px 0;">GAME OVER</h1>
+                    <div class="cpc-yellow" style="font-size:24px; margin-bottom:15px;">SCORE: ${String(state.score).padStart(6,'0')}</div>
+                    
+                    <div id="score-form" style="margin-bottom: 20px; display:flex; gap:10px; align-items:center;">
+                        <input type="text" id="player-name" value="${defaultName}" maxlength="12" placeholder="Your Name" style="font-size:20px; padding:5px; text-align:center; background:#000; color:#0f0; border:2px solid #0f0; outline:none; text-transform:uppercase; width:150px; font-family:'Courier New', monospace;">
+                        <button onclick="submitScore()" style="font-size:20px; padding:7px 15px; background:#0f0; color:#000; border:none; cursor:pointer; font-weight:bold; border-radius:5px;">SAVE</button>
+                    </div>
+                    
+                    <div id="leaderboard-container" style="margin-bottom:10px;">
+                        ${showLeaderboard()}
+                    </div>
+                    
+                    <button class="start-btn" onclick="initGame()" style="margin-top:10px;">RETRY</button>
+                `; 
             } else { 
                 state.player.x = 8; state.player.y = 10; state.player.pip = null; 
                 state.player.invincibility = 60;
