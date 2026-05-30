@@ -101,7 +101,7 @@
                 transform-origin: bottom left;
             }
             .bottom-nav-btns {
-                left: 80px; /* Safely to the right of the scaled music board */
+                left: 110px; /* Safely to the right of the scaled music board */
                 bottom: 5px;
                 gap: 5px;
             }
@@ -261,26 +261,20 @@
             left: 50%;
             transform: translate(-50%, -50%);
             width: 90%;
-            height: 80%;
             max-width: 800px;
-            max-height: 600px;
-            background: #f4e4bc;
-            color: #5d4037;
-            padding: 20px;
+            background: #fff;
+            padding: 5px;
             box-sizing: border-box;
-            border: 8px solid #8b4513;
             border-radius: 10px;
             box-shadow: 0 0 20px rgba(0,0,0,0.8);
             z-index: 200;
-            font-family: 'Georgia', serif;
-            background-image: radial-gradient(circle at center, #fdf5e6 0%, #f4e4bc 100%);
             flex-direction: column;
         }
         .popup.active { display: flex; }
-        .popup h2 { margin-top: 0; margin-bottom: 10px; color: #8b4513; text-align: center; border-bottom: 2px solid #8b4513; flex-shrink: 0; }
-        .popup-close { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; font-weight: bold; z-index: 210; }
-        .popup-content { flex-grow: 1; overflow: auto; display: flex; justify-content: center; align-items: flex-start; }
-        .popup-content img { width: 100%; height: auto; object-fit: contain; border-radius: 5px; border: 2px solid #8b4513; box-sizing: border-box; }
+        .popup h2 { display: none; }
+        .popup-close { position: absolute; top: 0px; right: 10px; font-size: 28px; color: #000; cursor: pointer; font-weight: bold; z-index: 210; text-shadow: 1px 1px 2px #fff; }
+        .popup-content { display: flex; justify-content: center; align-items: center; width: 100%; }
+        .popup-content img { width: 100%; height: auto; object-fit: contain; border-radius: 5px; display: block; }
 
         @media (max-width: 600px) {
             #game-ui { font-size: 16px; }
