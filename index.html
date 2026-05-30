@@ -93,27 +93,28 @@
 
         @media (max-width: 600px) {
             #music-board {
-                left: 5px;
-                bottom: 5px;
+                left: 2px;
+                bottom: 2px;
                 width: 100px;
                 padding: 3px;
-                transform: scale(0.7);
+                transform: scale(0.65);
                 transform-origin: bottom left;
             }
             .bottom-nav-btns {
-                left: 110px; /* Positioned next to music board */
-                bottom: 10px;
+                left: 80px; /* Safely to the right of the scaled music board */
+                bottom: 5px;
                 gap: 5px;
             }
             #mobile-fire-btn {
-                width: 80px;
-                height: 80px;
-                bottom: 30px; /* Adjusted position */
-                right: 30px;
-                font-size: 16px;
-                background: rgba(255, 0, 0, 0.4);
-                border: 3px solid rgba(255, 0, 0, 0.6);
-                opacity: 0.9;
+                width: 100px;
+                height: 100px;
+                bottom: 15px;
+                right: 15px;
+                font-size: 22px;
+                background: rgba(255, 0, 0, 0.85);
+                border: 4px solid #ff3333;
+                opacity: 1;
+                box-shadow: 0 0 15px red;
             }
         }
 
@@ -227,11 +228,6 @@
         }
         
         @media (max-width: 600px) {
-            .bottom-nav-btns {
-                left: 10px;
-                bottom: 15px;
-                gap: 5px;
-            }
             .bottom-nav-btns button {
                 padding: 5px;
                 font-size: 9px;
@@ -244,16 +240,6 @@
                 background: rgba(255, 255, 255, 0.1);
                 border: 1px solid rgba(255, 255, 255, 0.2);
                 opacity: 0.5;
-            }
-            #mobile-fire-btn {
-                width: 55px;
-                height: 55px;
-                bottom: 15px;
-                right: 15px;
-                font-size: 12px;
-                background: rgba(255, 0, 0, 0.2);
-                border: 2px solid rgba(255, 0, 0, 0.3);
-                opacity: 0.6;
             }
         }
 
