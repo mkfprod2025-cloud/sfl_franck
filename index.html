@@ -170,7 +170,6 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px 0;
             z-index: 100;
             text-align: center;
             overflow-y: auto;
@@ -216,33 +215,43 @@
         }
         
         @media (max-width: 600px) {
+            #music-board {
+                left: 10px;
+                top: 50px; /* Moved to top to avoid overlap with game/controls */
+                bottom: auto;
+                width: 120px;
+                padding: 5px;
+                transform: scale(0.8);
+                transform-origin: top left;
+                background: rgba(0, 0, 0, 0.5);
+            }
             .bottom-nav-btns {
                 left: 10px;
-                bottom: 25px;
+                bottom: 15px;
                 gap: 5px;
             }
             .bottom-nav-btns button {
                 padding: 5px;
-                font-size: 10px;
-                width: 55px;
-                height: 55px;
+                font-size: 9px;
+                width: 45px;
+                height: 45px;
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 background: rgba(255, 255, 255, 0.1);
-                border: 1px solid rgba(255, 255, 255, 0.3);
-                opacity: 0.7;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                opacity: 0.5;
             }
             #mobile-fire-btn {
-                width: 65px;
-                height: 65px;
-                bottom: 20px;
-                right: 20px;
-                font-size: 14px;
-                background: rgba(255, 0, 0, 0.3);
-                border: 2px solid rgba(255, 0, 0, 0.5);
-                opacity: 0.8;
+                width: 55px;
+                height: 55px;
+                bottom: 15px;
+                right: 15px;
+                font-size: 12px;
+                background: rgba(255, 0, 0, 0.2);
+                border: 2px solid rgba(255, 0, 0, 0.3);
+                opacity: 0.6;
             }
         }
 
