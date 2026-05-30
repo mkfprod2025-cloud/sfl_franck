@@ -535,12 +535,24 @@
             const speedFactor = 1 + (Math.min(state.level, 3) - 1) * 0.05 + (state.level > 3 ? (state.level - 3) * 0.08 : 0);
             const frankSpeed = 0.06 * speedFactor;
             let adx = 0, ady = 0, keyPress = false; if (keys['ArrowUp'] || keys['w']) { ady = -1; keyPress = true; } else if (keys['ArrowDown'] || keys['s']) { ady = 1; keyPress = true; } else if (keys['ArrowLeft'] || keys['a']) { adx = -1; keyPress = true; } else if (keys['ArrowRight'] || keys['d']) { adx = 1; keyPress = true; }
-            if (keyPress) { setDir(adx, ady); } else if (!state.player.isTouch) { state.player.dx = 0; state.player.dy = 0; } else { state.player.dx = 0; state.player.dy = 0; } // Force stop on key release
+            if (keyPress) { setDir(adx, ady); } else if (!state.player.isTouch) { state.player.dx = 0; state.player.dy = 0; }
             if (state.player.dx !== 0 || state.player.dy !== 0) {
                 const nx = state.player.x + state.player.dx * frankSpeed, ny = state.player.y + state.player.dy * frankSpeed, gx = Math.round(nx), gy = Math.round(ny);
                 if (gx >= 0 && gx < GRID_W && gy >= 0 && gy < GRID_H) {
                     const apple = state.apples.find(a => a.x === gx && a.y === gy);
-                    if (!apple || apple.state === 'falling') { state.player.x = nx; state.player.y = ny; if (state.grid[gy] && [CELL.DIRT, CELL.DIRT2, CELL.DIRT3].includes(state.grid[gy][gx])) state.grid[gy][gx] = CELL.EMPTY; else if (state.grid[gy] && [CELL.CHERRY, CELL.CHERRY2, CELL.CHERRY3].includes(state.grid[gy][gx])) { const pts = state.grid[gy][gx] === CELL.CHERRY ? 10 : (state.grid[gy][gx] === CELL.CHERRY2 ? 20 : 50); state.grid[gy][gx] = CELL.EMPTY; addScore(pts); } }
+                    if (!apple || apple.state === 'falling') { 
+                        state.player.x = nx; state.player.y = ny; 
+                        if (state.grid[gy]) {
+                            const cell = state.grid[gy][gx];
+                            if ([CELL.DIRT, CELL.DIRT2, CELL.DIRT3].includes(cell)) {
+                                state.grid[gy][gx] = CELL.EMPTY;
+                            } else if ([CELL.CHERRY, CELL.CHERRY2, CELL.CHERRY3].includes(cell)) {
+                                const pts = cell === CELL.CHERRY ? 10 : (cell === CELL.CHERRY2 ? 20 : 50);
+                                state.grid[gy][gx] = CELL.EMPTY;
+                                addScore(pts);
+                            }
+                        }
+                    }
                 }
             }
             if (state.player.pip) {
