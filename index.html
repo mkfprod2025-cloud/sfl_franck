@@ -227,16 +227,6 @@
         }
         
         @media (max-width: 600px) {
-            #music-board {
-                left: 10px;
-                top: 50px; /* Moved to top to avoid overlap with game/controls */
-                bottom: auto;
-                width: 120px;
-                padding: 5px;
-                transform: scale(0.8);
-                transform-origin: top left;
-                background: rgba(0, 0, 0, 0.5);
-            }
             .bottom-nav-btns {
                 left: 10px;
                 bottom: 15px;
@@ -613,7 +603,26 @@
 
         async function fetchGlobalLeaderboard() { try { const res = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`, { headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Cache-Control': 'no-cache' } }); if (res.ok) { const data = await res.json(); const content = decodeURIComponent(escape(atob(data.content))); return { scores: JSON.parse(content), sha: data.sha }; } } catch (e) { console.error("Global leaderboard fetch failed", e); } return { scores: [], sha: null }; }
         async function uploadScore(name, score) { try { const { scores, sha } = await fetchGlobalLeaderboard(); scores.push({ name, score, date: new Date().toLocaleDateString() }); scores.sort((a, b) => b.score - a.score); const topScores = scores.slice(0, 10); const content = btoa(unescape(encodeURIComponent(JSON.stringify(topScores, null, 2)))); const res = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`, { method: 'PUT', headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Score update: ${name} - ${score}`, content: content, sha: sha }) }); return res.ok; } catch (e) { console.error("Global score upload failed", e); return false; } }
-        async function showLeaderboard() { const container = document.getElementById('leaderboard-container'); if (container) container.innerHTML = '<div class="cpc-yellow">LOADING GLOBAL...</div>'; const { scores } = await fetchGlobalLeaderboard(); let board = scores.length > 0 ? scores : JSON.parse(localStorage.getItem('sfl_leaderboard') || '[]'); let html = '<h2 class="cpc-yellow" style="margin-top:0; font-size:24px;">LEADERBOARD</h2><table style="font-size:16px; margin: 0 auto; color:#fff; border-collapse:collapse; text-align:left;">'; board.forEach((s, i) => { let name = s.name || 'PLAYER'; html += `<tr><td style="padding:0 10px 5px 0;">${i+1}.</td><td style="padding:0 10px 5px 0; color:#0f0; text-transform:uppercase;">${name.substring(0,10)}</td><td style="padding:0 0 5px 0; text-align:right;">${String(s.score).padStart(6,'0')}</td></tr>`; }); html += '</table>'; if (container) container.innerHTML = html; return html; }
+        async function showLeaderboard() { 
+            const container = document.getElementById('leaderboard-container'); 
+            if (!container) return;
+            
+            // Show local immediately
+            let localBoard = JSON.parse(localStorage.getItem('sfl_leaderboard') || '[]'); 
+            let html = '<h2 class="cpc-yellow" style="margin-top:0; font-size:24px;">LEADERBOARD</h2><table style="font-size:16px; margin: 0 auto; color:#fff; border-collapse:collapse; text-align:left;">'; 
+            localBoard.forEach((s, i) => { let name = s.name || 'PLAYER'; html += `<tr><td style="padding:0 10px 5px 0;">${i+1}.</td><td style="padding:0 10px 5px 0; color:#0f0; text-transform:uppercase;">${name.substring(0,10)}</td><td style="padding:0 0 5px 0; text-align:right;">${String(s.score).padStart(6,'0')}</td></tr>`; }); 
+            html += '</table><div style="font-size:10px; margin-top:5px;">(Syncing global...)</div>'; 
+            container.innerHTML = html; 
+
+            // Fetch global and update
+            const { scores } = await fetchGlobalLeaderboard(); 
+            if (scores.length > 0) {
+                html = '<h2 class="cpc-yellow" style="margin-top:0; font-size:24px;">GLOBAL LEADERBOARD</h2><table style="font-size:16px; margin: 0 auto; color:#fff; border-collapse:collapse; text-align:left;">'; 
+                scores.forEach((s, i) => { let name = s.name || 'PLAYER'; html += `<tr><td style="padding:0 10px 5px 0;">${i+1}.</td><td style="padding:0 10px 5px 0; color:#0f0; text-transform:uppercase;">${name.substring(0,10)}</td><td style="padding:0 0 5px 0; text-align:right;">${String(s.score).padStart(6,'0')}</td></tr>`; }); 
+                html += '</table>'; 
+                container.innerHTML = html; 
+            }
+        }
         async function submitScoreToRender(name, score) {
             try {
                 const res = await fetch('https://sudokumabe-api.onrender.com/api/scores', {
@@ -640,11 +649,18 @@
             localBoard.sort((a,b) => b.score - a.score); 
             localStorage.setItem('sfl_leaderboard', JSON.stringify(localBoard.slice(0, 5))); 
             
-            // Render + GitHub (Dual Save)
-            await submitScoreToRender(playerName, state.score);
-            await uploadScore(playerName, state.score); 
-            
+            // Hide form immediately so user isn't blocked
             document.getElementById('score-form').style.display = 'none'; 
+            
+            // Render + GitHub (Dual Save) - non-blocking background tasks
+            Promise.all([
+                submitScoreToRender(playerName, state.score),
+                uploadScore(playerName, state.score)
+            ]).then(() => {
+                showLeaderboard(); // Refresh if global fetch worked
+            });
+            
+            // Show local leaderboard immediately
             await showLeaderboard(); 
         }
 
