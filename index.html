@@ -58,10 +58,10 @@
             width: 100%;
             max-width: 800px;
             flex-grow: 1;
-            background: #000;
+            background: transparent; /* Show global background */
             overflow: hidden;
             display: flex;
-            align-items: flex-start; /* Grid to the top */
+            align-items: flex-start;
             justify-content: center;
         }
 
@@ -72,39 +72,49 @@
             max-height: 100%;
             image-rendering: pixelated;
             object-fit: contain;
+            background: #000; /* Keep game area black */
         }
 
         #music-board {
             position: fixed;
-            left: 20px;
-            bottom: 20px;
-            background: rgba(0, 0, 0, 0.85);
-            border: 3px solid #555;
-            padding: 10px;
+            left: 5px;
+            bottom: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #555;
+            padding: 5px;
             color: #fff;
             z-index: 120;
-            width: 180px;
+            width: 140px;
             font-family: 'Courier New', Courier, monospace;
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 2px;
         }
 
         @media (max-width: 600px) {
             #music-board {
-                left: 10px;
-                bottom: 80px; /* Moved down but cleared for buttons */
-                width: 110px;
-                padding: 5px;
-                transform: scale(0.8);
+                left: 5px;
+                bottom: 5px;
+                width: 100px;
+                padding: 3px;
+                transform: scale(0.7);
                 transform-origin: bottom left;
-                background: rgba(0, 0, 0, 0.5);
             }
-            #music-board h3 { font-size: 10px; }
-            #music-board .song-name { font-size: 10px; }
-            .audio-controls { gap: 5px; }
-            #pause-btn { font-size: 10px; padding: 2px 4px; }
-            #volume-slider { width: 50px; }
+            .bottom-nav-btns {
+                left: 110px; /* Positioned next to music board */
+                bottom: 10px;
+                gap: 5px;
+            }
+            #mobile-fire-btn {
+                width: 80px;
+                height: 80px;
+                bottom: 30px; /* Adjusted position */
+                right: 30px;
+                font-size: 16px;
+                background: rgba(255, 0, 0, 0.4);
+                border: 3px solid rgba(255, 0, 0, 0.6);
+                opacity: 0.9;
+            }
         }
 
         #music-board h3 { margin: 0; font-size: 14px; color: #00FFFF; text-transform: uppercase; }
@@ -560,8 +570,21 @@
                 if (!state.grid[y]) continue;
                 for (let x = 0; x < GRID_W; x++) {
                     const cell = state.grid[y][x], px = x * TILE_W, py = y * TILE_H;
-                    if ([CELL.DIRT, CELL.DIRT2, CELL.DIRT3].includes(cell)) { let img = cell === CELL.DIRT ? images.tileMain : (cell === CELL.DIRT2 ? images.tile2 : images.tile3); if (img && img.complete) ctx.drawImage(img, px, py, TILE_W, TILE_H); else { ctx.fillStyle = PALETTE.DIRT; ctx.fillRect(px, py, TILE_W, TILE_H); } }
-                    else { if (images.dugGround && images.dugGround.complete) ctx.drawImage(images.dugGround, px, py, TILE_W, TILE_H); else { ctx.fillStyle = PALETTE.BLACK; ctx.fillRect(px, py, TILE_W, TILE_H); } if ([CELL.CHERRY, CELL.CHERRY2, CELL.CHERRY3].includes(cell)) { let img = cell === CELL.CHERRY ? images.cherry : (cell === CELL.CHERRY2 ? images.cherry2 : images.cherry3); if (img && img.complete) { const sw = TILE_W * SC_DEFAULT, sh = TILE_H * SC_DEFAULT; ctx.drawImage(img, px - (sw-TILE_W)/2, py - (sh-TILE_H)/2, sw, sh); } } }
+                    // Draw with 1px overlap to remove gaps
+                    const drawW = TILE_W + 1, drawH = TILE_H + 1;
+                    if ([CELL.DIRT, CELL.DIRT2, CELL.DIRT3].includes(cell)) { 
+                        let img = cell === CELL.DIRT ? images.tileMain : (cell === CELL.DIRT2 ? images.tile2 : images.tile3); 
+                        if (img && img.complete) ctx.drawImage(img, px, py, drawW, drawH); 
+                        else { ctx.fillStyle = PALETTE.DIRT; ctx.fillRect(px, py, drawW, drawH); } 
+                    }
+                    else { 
+                        if (images.dugGround && images.dugGround.complete) ctx.drawImage(images.dugGround, px, py, drawW, drawH); 
+                        else { ctx.fillStyle = PALETTE.BLACK; ctx.fillRect(px, py, drawW, drawH); } 
+                        if ([CELL.CHERRY, CELL.CHERRY2, CELL.CHERRY3].includes(cell)) { 
+                            let img = cell === CELL.CHERRY ? images.cherry : (cell === CELL.CHERRY2 ? images.cherry2 : images.cherry3); 
+                            if (img && img.complete) { const sw = TILE_W * SC_DEFAULT, sh = TILE_H * SC_DEFAULT; ctx.drawImage(img, px - (sw-TILE_W)/2, py - (sh-TILE_H)/2, sw, sh); } 
+                        } 
+                    }
                 }
             }
             if (images.hive && images.hive.complete) { const px = (Math.floor(GRID_W/2)-2) * TILE_W, py = -0.1 * TILE_H; ctx.drawImage(images.hive, px, py, TILE_W * 4, TILE_H * 1.5); }
