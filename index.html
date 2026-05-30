@@ -61,14 +61,15 @@
             background: #000;
             overflow: hidden;
             display: flex;
-            align-items: center;
+            align-items: flex-start; /* Grid to the top */
             justify-content: center;
         }
 
         canvas {
             display: block;
             width: 100%;
-            height: 100%;
+            height: auto;
+            max-height: 100%;
             image-rendering: pixelated;
             object-fit: contain;
         }
@@ -92,11 +93,12 @@
         @media (max-width: 600px) {
             #music-board {
                 left: 10px;
-                bottom: 110px;
-                width: 140px;
+                bottom: 80px; /* Moved down but cleared for buttons */
+                width: 110px;
                 padding: 5px;
-                transform: scale(0.9);
+                transform: scale(0.8);
                 transform-origin: bottom left;
+                background: rgba(0, 0, 0, 0.5);
             }
             #music-board h3 { font-size: 10px; }
             #music-board .song-name { font-size: 10px; }
@@ -523,7 +525,7 @@
             const speedFactor = 1 + (Math.min(state.level, 3) - 1) * 0.05 + (state.level > 3 ? (state.level - 3) * 0.08 : 0);
             const frankSpeed = 0.06 * speedFactor;
             let adx = 0, ady = 0, keyPress = false; if (keys['ArrowUp'] || keys['w']) { ady = -1; keyPress = true; } else if (keys['ArrowDown'] || keys['s']) { ady = 1; keyPress = true; } else if (keys['ArrowLeft'] || keys['a']) { adx = -1; keyPress = true; } else if (keys['ArrowRight'] || keys['d']) { adx = 1; keyPress = true; }
-            if (keyPress) { setDir(adx, ady); } else if (!state.player.isTouch) { state.player.dx = 0; state.player.dy = 0; }
+            if (keyPress) { setDir(adx, ady); } else if (!state.player.isTouch) { state.player.dx = 0; state.player.dy = 0; } else { state.player.dx = 0; state.player.dy = 0; } // Force stop on key release
             if (state.player.dx !== 0 || state.player.dy !== 0) {
                 const nx = state.player.x + state.player.dx * frankSpeed, ny = state.player.y + state.player.dy * frankSpeed, gx = Math.round(nx), gy = Math.round(ny);
                 if (gx >= 0 && gx < GRID_W && gy >= 0 && gy < GRID_H) {
@@ -577,7 +579,39 @@
         async function fetchGlobalLeaderboard() { try { const res = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`, { headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Cache-Control': 'no-cache' } }); if (res.ok) { const data = await res.json(); const content = decodeURIComponent(escape(atob(data.content))); return { scores: JSON.parse(content), sha: data.sha }; } } catch (e) { console.error("Global leaderboard fetch failed", e); } return { scores: [], sha: null }; }
         async function uploadScore(name, score) { try { const { scores, sha } = await fetchGlobalLeaderboard(); scores.push({ name, score, date: new Date().toLocaleDateString() }); scores.sort((a, b) => b.score - a.score); const topScores = scores.slice(0, 10); const content = btoa(unescape(encodeURIComponent(JSON.stringify(topScores, null, 2)))); const res = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`, { method: 'PUT', headers: { 'Authorization': `token ${GITHUB_CONFIG.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Score update: ${name} - ${score}`, content: content, sha: sha }) }); return res.ok; } catch (e) { console.error("Global score upload failed", e); return false; } }
         async function showLeaderboard() { const container = document.getElementById('leaderboard-container'); if (container) container.innerHTML = '<div class="cpc-yellow">LOADING GLOBAL...</div>'; const { scores } = await fetchGlobalLeaderboard(); let board = scores.length > 0 ? scores : JSON.parse(localStorage.getItem('sfl_leaderboard') || '[]'); let html = '<h2 class="cpc-yellow" style="margin-top:0; font-size:24px;">LEADERBOARD</h2><table style="font-size:16px; margin: 0 auto; color:#fff; border-collapse:collapse; text-align:left;">'; board.forEach((s, i) => { let name = s.name || 'PLAYER'; html += `<tr><td style="padding:0 10px 5px 0;">${i+1}.</td><td style="padding:0 10px 5px 0; color:#0f0; text-transform:uppercase;">${name.substring(0,10)}</td><td style="padding:0 0 5px 0; text-align:right;">${String(s.score).padStart(6,'0')}</td></tr>`; }); html += '</table>'; if (container) container.innerHTML = html; return html; }
-        async function submitScore() { const saveBtn = document.querySelector("#score-form button"); if (saveBtn) { saveBtn.disabled = true; saveBtn.innerText = 'SAVING...'; } let playerName = (document.getElementById('player-name') ? document.getElementById('player-name').value.trim() : 'Player') || 'Player'; localStorage.setItem('sfl_playerName', playerName); let localBoard = JSON.parse(localStorage.getItem('sfl_leaderboard') || '[]'); localBoard.push({name: playerName, score: state.score, date: new Date().toLocaleDateString()}); localBoard.sort((a,b) => b.score - a.score); localStorage.setItem('sfl_leaderboard', JSON.stringify(localBoard.slice(0, 5))); await uploadScore(playerName, state.score); document.getElementById('score-form').style.display = 'none'; await showLeaderboard(); }
+        async function submitScoreToRender(name, score) {
+            try {
+                const res = await fetch('https://sudokumabe-api.onrender.com/api/scores', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ player: name, score: score, game: 'fruity_frank' })
+                });
+                return res.ok;
+            } catch (e) {
+                console.error("Render API submission failed", e);
+                return false;
+            }
+        }
+
+        async function submitScore() { 
+            const saveBtn = document.querySelector("#score-form button"); 
+            if (saveBtn) { saveBtn.disabled = true; saveBtn.innerText = 'SAVING...'; } 
+            let playerName = (document.getElementById('player-name') ? document.getElementById('player-name').value.trim() : 'Player') || 'Player'; 
+            localStorage.setItem('sfl_playerName', playerName); 
+            
+            // Backup local
+            let localBoard = JSON.parse(localStorage.getItem('sfl_leaderboard') || '[]'); 
+            localBoard.push({name: playerName, score: state.score, date: new Date().toLocaleDateString()}); 
+            localBoard.sort((a,b) => b.score - a.score); 
+            localStorage.setItem('sfl_leaderboard', JSON.stringify(localBoard.slice(0, 5))); 
+            
+            // Render + GitHub (Dual Save)
+            await submitScoreToRender(playerName, state.score);
+            await uploadScore(playerName, state.score); 
+            
+            document.getElementById('score-form').style.display = 'none'; 
+            await showLeaderboard(); 
+        }
 
         function die() {
             state.lives--; updateLivesDisplay();
